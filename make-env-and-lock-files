@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -xu
+
+BLANKENV=$srcdir/blank_grubenv
+# Extract the rootfsa partition number.
+PART_NUMBER=$(sed -ne '/^mender_rootfsa_part=/ {s/^mender_rootfsa_part=//; p}' mender_grubenv_defines)
+
+# Grub uses loads of '######' to fill the empty space, so find that occurrence,
+# and write our variables there.
+mkdir -p mender_grubenv
+cp $BLANKENV mender_grubenv/env
+offset=$(grep '^######' -b mender_grubenv/env | egrep -o '^[0-9]+')
+dd of=mender_grubenv/env bs=$offset seek=1 conv=notrunc <<EOF
+bootcount=0
+mender_boot_part=$PART_NUMBER
+upgrade_available=0
+EOF
+
+# Lock files.
+
+cp $BLANKENV mender_grubenv/lock
+offset=$(grep '^######' -b mender_grubenv/lock | egrep -o '^[0-9]+')
+dd of=mender_grubenv/lock bs=$offset seek=1 conv=notrunc <<EOF
+editing=0
+EOF
+( cd mender_grubenv && sha256sum lock > lock.sha256sum )

@@ -1,0 +1,9 @@
+# Mandatory
+mender_rootfsa_part=2
+mender_rootfsb_part=3
+mender_kernel_root_base=/dev/mmcblk0p
+mender_grub_storage_device=hd0
+kernel_imagetype=bzImage
+
+# Mandatory on ARM
+kernel_devicetree=kernel.dtb
