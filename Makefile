@@ -70,6 +70,9 @@ install-tools:
 	install -m 755 $(srcdir)/fw_printenv $(DESTDIR)$(prefix)/bin
 	ln -sf fw_printenv $(DESTDIR)$(prefix)/bin/fw_setenv
 
+	install -d -m 755 $(DESTDIR)/etc
+	install -m 755 mender_grubenv.config $(DESTDIR)/etc
+
 
 clean:
 	rm -f mender_grubenv.config
