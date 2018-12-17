@@ -41,6 +41,17 @@ ENV2="$ENV_DIR/mender_grubenv2/env"
 LOCK2="$ENV_DIR/mender_grubenv2/lock"
 LOCKSUM2="$ENV_DIR/mender_grubenv2/lock.sha256sum"
 
+GRUB_EDITENV=`which grub-editenv 2>/dev/null`
+if [ -z "${GRUB_EDITENV}" ]; then
+    GRUB_EDITENV=`which grub2-editenv`
+fi
+
+# If empty, something is wrong and no point in proceeding
+if [ -z "${GRUB_EDITENV}" ]; then
+    echo "Could not find a valid grub-editenv binary. Aborting..."
+    exit 1
+fi
+
 if [ "`basename $0`" = "fw_setenv" ]; then
     FW_SETENV=1
 else
@@ -85,8 +96,8 @@ check_and_restore_env() {
     if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
         dd if=$ENV1 of=$ENV2 conv=notrunc > /dev/null 2>&1
         sync $ENV2
-        grub-editenv $LOCK2 create
-        grub-editenv $LOCK2 set editing=0
+        ${GRUB_EDITENV} $LOCK2 create
+        ${GRUB_EDITENV} $LOCK2 set editing=0
         sync $LOCK2
         if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
             echo "Unable to restore environment 2." 1>&2
@@ -95,8 +106,8 @@ check_and_restore_env() {
     elif ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
         dd if=$ENV2 of=$ENV1 conv=notrunc > /dev/null 2>&1
         sync $ENV1
-        grub-editenv $LOCK1 create
-        grub-editenv $LOCK1 set editing=0
+        ${GRUB_EDITENV} $LOCK1 create
+        ${GRUB_EDITENV} $LOCK1 set editing=0
         sync $LOCK1
         if ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
             echo "Unable to restore environment 1." 1>&2
@@ -161,22 +172,22 @@ setenv() {
 
     check_and_restore_env
 
-    grub-editenv $LOCK2 set editing=1
+    ${GRUB_EDITENV} $LOCK2 set editing=1
     sync $LOCK2
-    eval grub-editenv $ENV2 set $VARS
+    eval ${GRUB_EDITENV} $ENV2 set $VARS
     sync $ENV2
-    grub-editenv $LOCK2 set editing=0
+    ${GRUB_EDITENV} $LOCK2 set editing=0
     sync $LOCK2
     if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
         echo "Environment 2 unexpectedly corrupt after update." 1>&2
         exit 2
     fi
 
-    grub-editenv $LOCK1 set editing=1
+    ${GRUB_EDITENV} $LOCK1 set editing=1
     sync $LOCK1
-    eval grub-editenv $ENV1 set $VARS
+    eval ${GRUB_EDITENV} $ENV1 set $VARS
     sync $ENV1
-    grub-editenv $LOCK1 set editing=0
+    ${GRUB_EDITENV} $LOCK1 set editing=0
     sync $LOCK1
     if ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
         echo "Environment 1 unexpectedly corrupt after update." 1>&2
@@ -201,7 +212,7 @@ printenv() {
 
     check_and_restore_env
 
-    VARS="`grub-editenv $ENV1 list`"
+    VARS="`${GRUB_EDITENV} $ENV1 list`"
     eval "`echo "$VARS" | make_evalable`"
 
     if [ $NO_ARGS = 1 ]; then
