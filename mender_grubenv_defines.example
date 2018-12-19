@@ -18,6 +18,8 @@ mender_grub_storage_device=hd0
 # Type of kernel (bzImage or zImage)
 kernel_imagetype=bzImage
 
+# Type of initrd image
+initrd_imagetype=initrd.img
 ################################################################################
 # Mandatory on ARM
 ################################################################################
