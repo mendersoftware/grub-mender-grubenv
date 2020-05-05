@@ -1,0 +1,19 @@
+FROM debian:stretch
+
+RUN apt-get update -q && \
+    apt-get install -qy crossbuild-essential-armhf python wget bison flex
+
+ARG GRUB_VERSION=none
+RUN if [ "$GRUB_VERSION" = none ]; then echo "GRUB_VERSION must be set!" 1>&2; exit 1; fi
+
+RUN wget --progress=dot:mega ftp://ftp.gnu.org/gnu/grub/grub-${GRUB_VERSION}.tar.gz && \
+    tar -xzf grub-${GRUB_VERSION}.tar.gz
+
+WORKDIR grub-${GRUB_VERSION}
+
+RUN ./configure \
+    --prefix=/install \
+    --with-platform=efi \
+    --host arm-linux-gnueabihf
+RUN make -j $(nproc)
+RUN make install

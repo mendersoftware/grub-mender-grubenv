@@ -1,0 +1,42 @@
+variables:
+  S3_BUCKET_NAME: mender
+
+include:
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-commits-signoffs.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-license.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-github-status-updates.yml'
+
+stages:
+  - test
+  - build
+  - publish
+
+build:grub-efi:
+  stage: build
+  image: docker
+  services:
+    - docker:19.03.5-dind
+  before_script:
+    - apk --update --no-cache add libc6-compat
+  script:
+    - ./grub-efi/docker-create-grub-efi-binaries
+  artifacts:
+    expire_in: 2w
+    paths:
+      - grub-efi/output/*
+
+publish:s3:
+  stage: publish
+  image: debian:buster
+  dependencies:
+    - build:grub-efi
+  before_script:
+    - apt update && apt install -yyq awscli git
+  script:
+    - ./grub-efi/prepare-output-folder-for-upload
+    - aws s3 cp --recursive --acl public-read output/upload/ s3://$S3_BUCKET_NAME/grub-mender-grubenv/
+  only:
+    - /^(master|[0-9]+\.[0-9]+\.x)$/
