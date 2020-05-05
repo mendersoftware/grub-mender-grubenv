@@ -12,14 +12,21 @@ for arch in x86-64 arm aarch64; do
     mkdir -p output/$arch
     echo -n "Building binaries for $arch..."
     docker_build_ret=0
+    if [ "$VERBOSE" = 1 ]; then
+        exec 9>&1
+    else
+        exec 9>/tmp/docker-build.log
+    fi
     docker build \
            -f Dockerfile.$arch \
            -t grub-efi:$arch \
            --build-arg GRUB_VERSION=${GRUB_VERSION} \
-           . > /tmp/docker-build.log || docker_build_ret=$?
+           . 1>&9 || docker_build_ret=$?
     if [ $docker_build_ret -ne 0 ]; then
         echo " failed!"
-        tail -n 100 /tmp/docker-build.log
+        if [ "$VERBOSE" != 1 ]; then
+            tail -n 100 /tmp/docker-build.log
+        fi
         exit $docker_build_ret
     else
         echo " done"
