@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+
+cd $(dirname $0)
+
+. grub.inc
+GIT_SHA=$(git rev-parse HEAD)
+
+if [ -z "$GIT_SHA" -o -z "$GRUB_VERSION" ]; then
+    echo "Both GIT_SHA and GRUB_VERSION must be set!"
+    exit 1
+fi
+
+mkdir -p ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86-64
+ln -f output/grub-efi-bootx64.efi ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86-64/grub-efi-bootx64.efi
+ln -f output/x86-64/bin/grub-editenv ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86-64/grub-editenv
+
+mkdir -p ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/arm
+ln -f output/grub-efi-bootarm.efi ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/arm/grub-efi-bootarm.efi
+ln -f output/arm/bin/grub-editenv ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/arm/grub-editenv
+
+mkdir -p ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/aarch64
+ln -f output/grub-efi-bootaa64.efi ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/aarch64/grub-efi-bootaa64.efi
+ln -f output/aarch64/bin/grub-editenv ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/aarch64/grub-editenv

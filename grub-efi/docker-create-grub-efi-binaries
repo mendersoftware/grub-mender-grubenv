@@ -1,0 +1,67 @@
+#!/bin/sh
+
+set -e
+
+cd $(dirname $0)
+
+. grub.inc
+
+rm -rf output
+
+for arch in x86-64 arm aarch64; do
+    mkdir -p output/$arch
+    echo -n "Building binaries for $arch..."
+    docker_build_ret=0
+    if [ "$VERBOSE" = 1 ]; then
+        exec 9>&1
+    else
+        exec 9>/tmp/docker-build.log
+    fi
+    docker build \
+           -f Dockerfile.$arch \
+           -t grub-efi:$arch \
+           --build-arg GRUB_VERSION=${GRUB_VERSION} \
+           . 1>&9 || docker_build_ret=$?
+    if [ $docker_build_ret -ne 0 ]; then
+        echo " failed!"
+        if [ "$VERBOSE" != 1 ]; then
+            tail -n 100 /tmp/docker-build.log
+        fi
+        exit $docker_build_ret
+    else
+        echo " done"
+    fi
+    echo -n "Extracting binaries for $arch..."
+    docker run --rm --entrypoint "/bin/sh" \
+        -v $(pwd)/output/$arch:/export grub-efi:$arch \
+        -c "chown -R --reference /export /install/* && mv /install/* /export"
+    echo " done"
+done
+
+echo "Generating EFI boot images"
+
+output_dir=$(pwd)/output
+grub_mkimage_native=${output_dir}/x86-64/bin/grub-mkimage
+
+set -x
+
+$grub_mkimage_native \
+    -p /EFI/BOOT \
+    -d ${output_dir}/x86-64/lib/grub/x86_64-efi \
+    -O x86_64-efi \
+    -o ${output_dir}/grub-efi-bootx64.efi \
+    $GRUB_MODULES
+
+$grub_mkimage_native \
+    -p /EFI/BOOT \
+    -d ${output_dir}/arm/lib/grub/arm-efi \
+    -O arm-efi \
+    -o ${output_dir}/grub-efi-bootarm.efi \
+    $GRUB_MODULES
+
+$grub_mkimage_native \
+    -p /EFI/BOOT \
+    -d ${output_dir}/aarch64/lib/grub/arm64-efi \
+    -O arm64-efi \
+    -o ${output_dir}/grub-efi-bootaa64.efi \
+    $GRUB_MODULES
