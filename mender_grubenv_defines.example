@@ -20,10 +20,3 @@ kernel_imagetype=bzImage
 
 # Type of initrd image
 initrd_imagetype=initrd.img
-
-################################################################################
-# Mandatory on ARM
-################################################################################
-
-# Basename of DTB that should be loaded by the bootloader.
-kernel_devicetree=kernel.dtb
