@@ -28,6 +28,16 @@ build:grub-efi:
     paths:
       - grub-efi/output/*
 
+test:
+  stage: test
+  image: debian:10
+  variables:
+    DEBIAN_FRONTEND: noninteractive
+  before_script:
+    - apt update && apt install -yy make
+  script:
+    - make check
+
 publish:s3:
   stage: publish
   image: debian:buster
