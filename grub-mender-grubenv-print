@@ -52,14 +52,14 @@ if [ -z "${GRUB_EDITENV}" ]; then
     exit 1
 fi
 
-if [ "`basename $0`" = "fw_setenv" ]; then
-    FW_SETENV=1
+if [ "`basename $0`" = "grub-mender-grubenv-set" ] || [ "`basename $0`" = "fw_setenv" ]; then
+    SETENV=1
 else
-    FW_SETENV=0
+    SETENV=0
 fi
 
 usage() {
-    if [ $FW_SETENV = 1 ]; then
+    if [ $SETENV = 1 ]; then
         cat <<EOF
 `basename $0` [VARIABLES ...]
 Sets variables in the mender-grubenv environment.
@@ -224,7 +224,7 @@ printenv() {
     fi
 }
 
-if [ $FW_SETENV = 1 ]; then
+if [ $SETENV = 1 ]; then
     setenv "$@"
 else
     printenv "$@"

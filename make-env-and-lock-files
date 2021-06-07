@@ -4,7 +4,7 @@ set -xu
 
 BLANKENV=$srcdir/blank_grubenv
 # Extract the rootfsa partition number.
-PART_NUMBER=$(sed -ne '/^mender_rootfsa_part=/ {s/^mender_rootfsa_part=//; p}' mender_grubenv_defines)
+PART_NUMBER=$(sed -ne '/^mender_rootfsa_part=/ {s/^mender_rootfsa_part=//; p}' ${DEFINES_FILE:-mender_grubenv_defines})
 
 # Grub uses loads of '######' to fill the empty space, so find that occurrence,
 # and write our variables there.
