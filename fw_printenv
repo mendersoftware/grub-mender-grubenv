@@ -48,7 +48,7 @@ fi
 
 # If empty, something is wrong and no point in proceeding
 if [ -z "${GRUB_EDITENV}" ]; then
-    echo "Could not find a valid grub-editenv binary. Aborting..."
+    echo "Could not find a valid grub-editenv binary. Aborting..." 1>&2
     exit 1
 fi
 
@@ -60,7 +60,7 @@ fi
 
 usage() {
     if [ $FW_SETENV = 1 ]; then
-        cat <<EOF
+        cat 1>&2 <<EOF
 `basename $0` [VARIABLES ...]
 Sets variables in the mender-grubenv environment.
 
@@ -76,7 +76,7 @@ Script Syntax:
   as part of the value itself.
 EOF
     else
-        cat <<EOF
+        cat 1>&2 <<EOF
 `basename $0` [VARIABLE ...]
 Print variables from the mender-grubenv environment.
 
