@@ -8,6 +8,7 @@ export prefix
 BOOT_DIR ?= /boot/efi
 BOOT_ENV_DIR ?= /EFI/BOOT
 ENV_DIR ?= $(BOOT_DIR)$(BOOT_ENV_DIR)
+DEFINES_FILE ?= mender_grubenv_defines
 
 TMP_DIR ?= tmp-workdir
 
@@ -19,11 +20,11 @@ SOURCES = \
 
 all: compile
 
-compile: mender_grub.cfg
+compile: mender_grub.cfg mender_grubenv.config
 
 mender_grub.cfg: $(SOURCES) $(srcdir)/Makefile
-	@if [ ! -e mender_grubenv_defines ]; then \
-		echo "You need to create mender_grubenv_defines."; \
+	@if [ ! -e $(DEFINES_FILE) ]; then \
+		echo "You need to create $(DEFINES_FILE)."; \
 		echo "Take a look at mender_grubenv_defines.example."; \
 		echo; \
 		exit 1; \
@@ -35,7 +36,7 @@ mender_grub.cfg: $(SOURCES) $(srcdir)/Makefile
 	rm -rf $(TMP_DIR)
 	mkdir -p $(TMP_DIR)
 	cp -f $(SCRIPT_SOURCES) $(TMP_DIR)
-	cp -f mender_grubenv_defines $(TMP_DIR)/00_mender_grubenv_defines_grub.cfg
+	cp -f $(DEFINES_FILE) $(TMP_DIR)/00_mender_grubenv_defines_grub.cfg
 	cd $(TMP_DIR) && for script in [0-9][0-9]_*_grub.cfg; do \
 		echo "# Start of ---------- `basename $$script` ----------"; \
 		cat $$script; \
@@ -44,15 +45,19 @@ mender_grub.cfg: $(SOURCES) $(srcdir)/Makefile
 	mv $(TMP_DIR)/mender_grub.cfg .
 	rm -rf $(TMP_DIR)
 
+mender_grubenv.config:
 	echo "ENV_DIR = $(ENV_DIR)" > mender_grubenv.config
 
-# Environment files.
+mender_grubenv/env:
 	$(srcdir)/make-env-and-lock-files
 
 
+check:
+	env MAKEFLAGS=-j1 ./tests/test_makefile.sh
+
 install: install-boot-files install-tools
 
-install-boot-files: compile
+install-boot-files: mender_grub.cfg mender_grubenv/env
 	install -d -m 755 $(DESTDIR)$(ENV_DIR)
 	install -m 644 mender_grub.cfg $(DESTDIR)$(ENV_DIR)/grub.cfg
 
@@ -65,11 +70,17 @@ install-boot-files: compile
 	install -m 644 mender_grubenv/lock $(DESTDIR)$(ENV_DIR)/mender_grubenv2/lock
 	install -m 644 mender_grubenv/lock.sha256sum $(DESTDIR)$(ENV_DIR)/mender_grubenv2/lock.sha256sum
 
-install-tools:
+install-tools: install-config
 	install -d -m 755 $(DESTDIR)$(prefix)/bin
-	install -m 755 $(srcdir)/fw_printenv $(DESTDIR)$(prefix)/bin
+	install -m 755 $(srcdir)/grub-mender-grubenv-print $(DESTDIR)$(prefix)/bin
+	ln -sf grub-mender-grubenv-print $(DESTDIR)$(prefix)/bin/grub-mender-grubenv-set
+
+install-legacy-tools: install-config
+	install -d -m 755 $(DESTDIR)$(prefix)/bin
+	install -m 755 $(srcdir)/grub-mender-grubenv-print $(DESTDIR)$(prefix)/bin/fw_printenv
 	ln -sf fw_printenv $(DESTDIR)$(prefix)/bin/fw_setenv
 
+install-config: mender_grubenv.config
 	install -d -m 755 $(DESTDIR)/etc
 	install -m 755 mender_grubenv.config $(DESTDIR)/etc
 
@@ -83,4 +94,4 @@ clean:
 	rm -fd mender_grubenv
 
 distclean: clean
-	rm -f mender_grubenv_defines
+	rm -f $(DEFINES_FILE)
