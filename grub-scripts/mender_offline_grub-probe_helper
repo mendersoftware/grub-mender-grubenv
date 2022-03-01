@@ -1,0 +1,41 @@
+#!/bin/sh
+
+. /etc/default/grub.d/00_mender_grubenv_defines.cfg
+
+# If there is a `--target=partmap` argument, return "gpt" for device names.
+if echo "$@" | egrep -q ' --target=partmap| -t partmap'; then
+    if echo "$@" | egrep -q '/dev/'; then
+        echo gpt
+    fi
+    exit 0
+fi
+
+BOOT_PART_DEVICE=$("${mender_real_grub_probe}" -t device /boot/efi)
+ROOT_PART_DEVICE=$("${mender_real_grub_probe}" -t device /)
+
+# Replace grub-probe arguments with loopback device names. Also replace
+# "part-*.fs" entries, which mender-convert uses.
+ARGS="$(echo "$@" | sed -E \
+    -e "s,${mender_kernel_root_base}1,${BOOT_PART_DEVICE},g" \
+    -e "s,${mender_kernel_root_base}${mender_rootfsa_part},${ROOT_PART_DEVICE},g" \
+    -e "s,[^ ]*part-1.fs,${BOOT_PART_DEVICE},g" \
+    -e "s,[^ ]*part-2.fs,${ROOT_PART_DEVICE},g")"
+
+# If there is any occurrence of ${mender_kernel_root_base} still in the
+# arguments, it may be a partition we have not mounted, and therefore cannot
+# handle. Just fail the call, and the grub scripts should skip this partition.
+if echo "$ARGS" | fgrep ${mender_kernel_root_base} >/dev/null; then
+    echo "Cannot probe device in command line: $ARGS" 1>&2
+    exit 1
+fi
+
+TMP_RESULT=$(mktemp)
+# Replace grub-probe results with real device names.
+( "${mender_real_grub_probe}" $ARGS ; echo $? > $TMP_RESULT ) | sed -E \
+    -e "s,${BOOT_PART_DEVICE},${mender_kernel_root_base}1,g" \
+    -e "s,${ROOT_PART_DEVICE},${mender_kernel_root_base}${mender_rootfsa_part},g"
+
+# Return real exit code.
+ret=$(cat "$TMP_RESULT")
+rm -f "$TMP_RESULT"
+exit $ret

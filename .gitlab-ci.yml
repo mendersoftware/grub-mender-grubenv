@@ -36,6 +36,8 @@ test:
   before_script:
     - apt update && apt install -yy make
   script:
+    - cp mender_grubenv_defines.example mender_grubenv_defines
+    - make
     - make check
 
 publish:s3:

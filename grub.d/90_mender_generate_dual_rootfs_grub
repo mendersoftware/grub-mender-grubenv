@@ -1,0 +1,38 @@
+set -e
+
+if [ "$GRUB_MENDER_GRUBENV_CFG_GENERATION" != "true" ]; then
+    if [ "$(${grub_probe} --target device /)" = "$(${grub_probe} --target device /boot/grub)" ]; then
+        cat 1>&2 <<'EOF'
+ERROR: /boot/grub is on the root filesystem. This is not supported when using
+Mender with dual rootfs setup.
+Please make sure that it is either a symlink to a boot partition (usually it
+points to `efi/grub-mender-grubenv`), or that a boot partition is mounted there.
+EOF
+        exit 1
+    fi
+
+    tempfile="$(mktemp --tmpdir grub.cfg.XXXXXX)"
+
+    # Since this is a recursive invocation, at this point, the relevant messages
+    # from grub-mkconfig should already have been printed. Therefore hide stderr
+    # so that we don't print them a second time.
+    GRUB_MENDER_GRUBENV_CFG_GENERATION=true grub-mkconfig -o $tempfile 2>/dev/null
+
+    # The first boot entry, which is for the partition which generates this boot
+    # script, and the rootfs used by Mender, should not have "root=" statement,
+    # since this is set by Mender, and should not be set by the boot entry
+    # itself. This guarantees that the rootfs can be loaded from either of the
+    # two dual rootfs partitions.
+    if egrep --max-count=1 --before-context=3 '^\s+([Ll]oading [Ll]inux|linux\s)' $tempfile | egrep '^\s*(set\s+)?root=' 1>&2; then
+        cat 1>&2 <<EOF
+ERROR: Found unsafe occurrence of 'root=' in grub.cfg.
+This is not safe to use together with Mender, and may be because of platform changes.
+Please make sure to configure GRUB so that it does not produce a 'root=' entry for the first menu entry (except in the linux kernel argument).
+See the scripts in '/etc/grub.d', and in particular those that call 'prepare_grub_to_access_device'. These calls should be avoided.
+See '$tempfile' for the output which was generated.
+EOF
+        exit 1
+    fi
+
+    mv -f "$tempfile" /boot/grub-mender-grubenv.cfg
+fi
