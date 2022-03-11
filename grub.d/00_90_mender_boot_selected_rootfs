@@ -7,7 +7,7 @@ if [ "${upgrade_available}" = "1" ]; then
     echo "Returned from rootfs boot script. This could mean that the currently selected rootfs is corrupt, and the upgrade failed. Rebooting in 10 seconds..."
     sleep 10
     reboot
-elif [ "${check_signatures}" == "enforce" ]; then
+elif [ "${check_signatures}" = "enforce" ]; then
     echo "Returned from rootfs boot script. This could mean that the currently selected rootfs is corrupt. But there is no upgrade in progress, and Signature Verification is on, so there is nothing we can do. Shutting down in 10 seconds..."
     sleep 10
     halt
