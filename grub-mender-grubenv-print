@@ -2,19 +2,19 @@
 
 # This script mimicks the behavior of fw_printenv/fw_setenv from U-Boot.
 
-# Here is how the environment works. We've got three problems to overcome:
+# Here is how the environment works. We've got two problems to overcome:
 #   1. GRUB doesn't support checksumming the environment.
-#   2. There is a hashsum command, but it can only be used to verify checksums,
-#      not generate them.
-#   3. We want to store the environment on the boot partition, which is FAT, and
+#   2. We want to store the environment on the boot partition, which is FAT, and
 #      can therefore be corrupted.
 
-# For problem 1 and 2, we need to solve them together. We can have multiple
-# environment files, so the solution is to use an environment file with a known
-# checksum as the lock file for the other non-checksummed file that holds the
-# payload. While we edit, we give the lock content that won't pass the checksum.
+# For problem 1, we use an environment file for a "locking" variable, which can
+# only take two values: 0 or 1. Since there are no other alternatives we don't
+# need to checksum this environment file. In addition to the "locking"
+# environment file, we have an environment file with the payload data in it. As
+# long as "locking" is zero, we assume the real environment file is up to
+# date. If it is non-zero, it is in an unknown state, and we need to restore it.
 
-# Regarding problem 3, storing the environment on the data partition was
+# Regarding problem 2, storing the environment on the data partition was
 # considered, since it is typically ext4, but it seems wrong to store this very
 # boot specific information here, especially if we consider things like being
 # able to factory reset the data partition without losing which partition should
@@ -22,18 +22,28 @@
 # directories on the boot partition. This should ensure that even if the Linux
 # vfat driver updates the modification time of the file, and the system crashes
 # in the middle of writing that sector, only that directory gets corrupted. The
-# other one should be fine. It can't be guaranteed this will help against
-# absolutely all forms of corruption, but should cover the vast majority of
-# cases, and one would have to be really unlucky to still get an unusable
-# environment.
+# other one should be fine. Using the lock mechanics described in the previous
+# paragraph, we can then use the healthy environment to restore the unhealthy
+# one. It can't be guaranteed this will help against absolutely all forms of
+# corruption, but it should cover the vast majority of cases, and one would have
+# to be really unlucky to still get an unusable environment.
+
+# In the past, we also used a sha256sum checksum file. The boot script doesn't
+# use this anymore because the `hashsum` command is not included in all distro
+# editions of GRUB. But because the sha256sum checksum also makes sure the
+# format of the whole environment file is valid, not just the variable, we have
+# kept using it in this command line utility for better detection of corruption.
 
 if [ -r /etc/mender_grubenv.config ]; then
     ENV_DIR="$(egrep '^ENV_DIR *= *' /etc/mender_grubenv.config | sed -e 's/^ENV_DIR *= *//' | tail -n 1)"
 fi
 if [ -z "$ENV_DIR" ]; then
-    ENV_DIR=/boot/efi/EFI/BOOT
+    if [ -d /boot/efi/grub-mender-grubenv ]; then
+        ENV_DIR=/boot/efi/grub-mender-grubenv
+    else
+        ENV_DIR=/boot/efi/EFI/BOOT
+    fi
 fi
-
 ENV1="$ENV_DIR/mender_grubenv1/env"
 LOCK1="$ENV_DIR/mender_grubenv1/lock"
 LOCKSUM1="$ENV_DIR/mender_grubenv1/lock.sha256sum"

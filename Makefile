@@ -6,9 +6,13 @@ prefix ?= /usr
 export prefix
 
 BOOT_DIR ?= /boot/efi
-BOOT_ENV_DIR ?= /EFI/BOOT
+BOOT_ENV_DIR ?= /grub-mender-grubenv
+EFI_DIR ?= /EFI/BOOT
 ENV_DIR ?= $(BOOT_DIR)$(BOOT_ENV_DIR)
 DEFINES_FILE ?= mender_grubenv_defines
+
+LEGACY_BOOT_ENV_DIR ?= /EFI/BOOT
+LEGACY_ENV_DIR ?= $(BOOT_DIR)$(LEGACY_BOOT_ENV_DIR)
 
 TMP_DIR ?= tmp-workdir
 
@@ -20,7 +24,7 @@ SOURCES = \
 
 all: compile
 
-compile: mender_grub.cfg mender_grubenv.config
+compile: mender_grub.cfg
 
 mender_grub.cfg: $(SOURCES) $(srcdir)/Makefile
 	@if [ ! -e $(DEFINES_FILE) ]; then \
@@ -45,9 +49,6 @@ mender_grub.cfg: $(SOURCES) $(srcdir)/Makefile
 	mv $(TMP_DIR)/mender_grub.cfg .
 	rm -rf $(TMP_DIR)
 
-mender_grubenv.config:
-	echo "ENV_DIR = $(ENV_DIR)" > mender_grubenv.config
-
 mender_grubenv/env:
 	$(srcdir)/make-env-and-lock-files
 
@@ -55,12 +56,24 @@ mender_grubenv/env:
 check:
 	env MAKEFLAGS=-j1 ./tests/test_makefile.sh
 
-install: install-boot-files install-tools
+install: install-grub.d-boot-files install-tools
 
-install-boot-files: mender_grub.cfg mender_grubenv/env
-	install -d -m 755 $(DESTDIR)$(ENV_DIR)
-	install -m 644 mender_grub.cfg $(DESTDIR)$(ENV_DIR)/grub.cfg
+install-standalone: install-standalone-boot-files install-tools
 
+install-standalone-boot-files: install-standalone-boot-script install-boot-env
+
+install-grub.d-boot-files: install-grub.d-boot-scripts install-boot-env
+
+install-standalone-boot-script: mender_grub.cfg
+	install -d -m 755 $(DESTDIR)$(BOOT_DIR)/$(EFI_DIR)
+	install -m 644 mender_grub.cfg $(DESTDIR)$(BOOT_DIR)/$(EFI_DIR)/grub.cfg
+
+# mender_grub.cfg is not really needed, but then we ensure the defines are
+# present.
+install-grub.d-boot-scripts: mender_grub.cfg
+	$(MAKE) -C grub.d install
+
+install-boot-env: mender_grubenv/env
 	install -m 755 -d $(DESTDIR)$(ENV_DIR)/mender_grubenv1
 	install -m 644 mender_grubenv/env $(DESTDIR)$(ENV_DIR)/mender_grubenv1/env
 	install -m 644 mender_grubenv/lock $(DESTDIR)$(ENV_DIR)/mender_grubenv1/lock
@@ -70,23 +83,80 @@ install-boot-files: mender_grub.cfg mender_grubenv/env
 	install -m 644 mender_grubenv/lock $(DESTDIR)$(ENV_DIR)/mender_grubenv2/lock
 	install -m 644 mender_grubenv/lock.sha256sum $(DESTDIR)$(ENV_DIR)/mender_grubenv2/lock.sha256sum
 
-install-tools: install-config
+install-legacy-boot-env: mender_grubenv/env
+	install -m 755 -d $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1
+	install -m 644 mender_grubenv/env $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1/env
+	install -m 644 mender_grubenv/lock $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1/lock
+	install -m 644 mender_grubenv/lock.sha256sum $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1/lock.sha256sum
+	install -m 755 -d $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2
+	install -m 644 mender_grubenv/env $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2/env
+	install -m 644 mender_grubenv/lock $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2/lock
+	install -m 644 mender_grubenv/lock.sha256sum $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2/lock.sha256sum
+
+install-tools:
 	install -d -m 755 $(DESTDIR)$(prefix)/bin
 	install -m 755 $(srcdir)/grub-mender-grubenv-print $(DESTDIR)$(prefix)/bin
 	ln -sf grub-mender-grubenv-print $(DESTDIR)$(prefix)/bin/grub-mender-grubenv-set
 
-install-legacy-tools: install-config
+install-legacy-tools:
 	install -d -m 755 $(DESTDIR)$(prefix)/bin
 	install -m 755 $(srcdir)/grub-mender-grubenv-print $(DESTDIR)$(prefix)/bin/fw_printenv
 	ln -sf fw_printenv $(DESTDIR)$(prefix)/bin/fw_setenv
 
-install-config: mender_grubenv.config
-	install -d -m 755 $(DESTDIR)/etc
-	install -m 755 mender_grubenv.config $(DESTDIR)/etc
+install-offline-files:
+	$(MAKE) -C grub.d/default install-offline-cfg
+	install -m 755 grub-scripts/mender_offline_grub-probe_helper $(DESTDIR)$(prefix)/sbin
 
+uninstall: uninstall-grub.d-boot-files uninstall-tools
+
+uninstall-standalone: uninstall-standalone-boot-files uninstall-tools
+
+uninstall-standalone-boot-files: uninstall-standalone-boot-script uninstall-boot-env
+
+uninstall-grub.d-boot-files: uninstall-grub.d-boot-scripts uninstall-boot-env
+
+uninstall-standalone-boot-script:
+	rm -f $(DESTDIR)$(BOOT_DIR)/$(EFI_DIR)/grub.cfg
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(BOOT_DIR)/$(EFI_DIR)
+
+uninstall-grub.d-boot-scripts:
+	$(MAKE) -C grub.d uninstall
+
+uninstall-boot-env:
+	rm -f $(DESTDIR)$(ENV_DIR)/mender_grubenv1/env
+	rm -f $(DESTDIR)$(ENV_DIR)/mender_grubenv1/lock
+	rm -f $(DESTDIR)$(ENV_DIR)/mender_grubenv1/lock.sha256sum
+	rm -f $(DESTDIR)$(ENV_DIR)/mender_grubenv2/env
+	rm -f $(DESTDIR)$(ENV_DIR)/mender_grubenv2/lock
+	rm -f $(DESTDIR)$(ENV_DIR)/mender_grubenv2/lock.sha256sum
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(ENV_DIR)/mender_grubenv1
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(ENV_DIR)/mender_grubenv2
+
+uninstall-legacy-boot-env:
+	rm -f $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1/env
+	rm -f $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1/lock
+	rm -f $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1/lock.sha256sum
+	rm -f $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2/env
+	rm -f $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2/lock
+	rm -f $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2/lock.sha256sum
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv1
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(LEGACY_ENV_DIR)/mender_grubenv2
+
+uninstall-tools:
+	rm -f $(DESTDIR)$(prefix)/bin/grub-mender-grubenv-print
+	rm -f $(DESTDIR)$(prefix)/bin/grub-mender-grubenv-set
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(prefix)/bin
+
+uninstall-legacy-tools:
+	rm -f $(DESTDIR)$(prefix)/bin/fw_printenv
+	rm -f $(DESTDIR)$(prefix)/bin/fw_setenv
+	rmdir -p --ignore-fail-on-non-empty $(DESTDIR)$(prefix)/bin
+
+uninstall-offline-files:
+	$(MAKE) -C grub.d/default uninstall-offline-cfg
+	rm -f $(DESTDIR)$(prefix)/sbin/mender_offline_grub-probe_helper
 
 clean:
-	rm -f mender_grubenv.config
 	rm -f mender_grub.cfg
 	rm -f mender_grubenv/env
 	rm -f mender_grubenv/lock
@@ -95,3 +165,31 @@ clean:
 
 distclean: clean
 	rm -f $(DEFINES_FILE)
+
+.PHONY: all
+.PHONY: compile
+.PHONY: check
+.PHONY: install
+.PHONY: install-standalone
+.PHONY: install-standalone-boot-files
+.PHONY: install-grub.d-boot-files
+.PHONY: install-standalone-boot-script
+.PHONY: install-grub.d-boot-scripts
+.PHONY: install-boot-env
+.PHONY: install-legacy-boot-env
+.PHONY: install-tools
+.PHONY: install-legacy-tools
+.PHONY: install-offline-files
+.PHONY: uninstall
+.PHONY: uninstall-standalone
+.PHONY: uninstall-standalone-boot-files
+.PHONY: uninstall-grub.d-boot-files
+.PHONY: uninstall-standalone-boot-script
+.PHONY: uninstall-grub.d-boot-scripts
+.PHONY: uninstall-boot-env
+.PHONY: uninstall-legacy-boot-env
+.PHONY: uninstall-tools
+.PHONY: uninstall-legacy-tools
+.PHONY: uninstall-offline-files
+.PHONY: clean
+.PHONY: distclean

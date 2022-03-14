@@ -3,15 +3,16 @@
 ################################################################################
 
 # Partition index of root filesystem A
-mender_rootfsa_part=2
+mender_rootfsa_part=3
 
 # Partition index of root filesystem B
-mender_rootfsb_part=3
+mender_rootfsb_part=4
 
 # Device file corresponding to the root filesystem partitions, without index.
 mender_kernel_root_base=/dev/mmcblk0p
 
-# Type of kernel (bzImage or zImage)
+# Type of kernel (bzImage or zImage). Mandatory unless using grub.d integration,
+# in which case it is unused.
 kernel_imagetype=bzImage
 
 ################################################################################
@@ -19,7 +20,7 @@ kernel_imagetype=bzImage
 ################################################################################
 
 # Type of initrd image
-initrd_imagetype=initrd.img
+#initrd_imagetype=initrd.img
 
 # These variables are for use with a non stock Mender installation. 
 # They imply dual A/B kernel partitions (i.e. /boot) outside of the normal dual 
