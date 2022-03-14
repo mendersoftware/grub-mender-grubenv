@@ -4,7 +4,7 @@ set -e
 
 cd $(dirname $0)
 
-. grub.inc
+. ./grub.inc
 
 rm -rf output
 
