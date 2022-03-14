@@ -12,9 +12,9 @@ if [ -z "$GIT_SHA" -o -z "$GRUB_VERSION" ]; then
     exit 1
 fi
 
-mkdir -p ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86-64
-ln -f output/grub-efi-bootx64.efi ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86-64/grub-efi-bootx64.efi
-ln -f output/x86-64/bin/grub-editenv ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86-64/grub-editenv
+mkdir -p ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86_64
+ln -f output/grub-efi-bootx64.efi ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86_64/grub-efi-bootx64.efi
+ln -f output/x86_64/bin/grub-editenv ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/x86_64/grub-editenv
 
 mkdir -p ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/arm
 ln -f output/grub-efi-bootarm.efi ../output/upload/grub-efi/$GRUB_VERSION-grub-mender-grubenv-$GIT_SHA/arm/grub-efi-bootarm.efi
