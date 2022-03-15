@@ -4,11 +4,11 @@ set -e
 
 cd $(dirname $0)
 
-. grub.inc
+. ./grub.inc
 
 rm -rf output
 
-for arch in x86-64 arm aarch64; do
+for arch in x86_64 arm aarch64; do
     mkdir -p output/$arch
     echo -n "Building binaries for $arch..."
     docker_build_ret=0
@@ -41,13 +41,13 @@ done
 echo "Generating EFI boot images"
 
 output_dir=$(pwd)/output
-grub_mkimage_native=${output_dir}/x86-64/bin/grub-mkimage
+grub_mkimage_native=${output_dir}/x86_64/bin/grub-mkimage
 
 set -x
 
 $grub_mkimage_native \
     -p /EFI/BOOT \
-    -d ${output_dir}/x86-64/lib/grub/x86_64-efi \
+    -d ${output_dir}/x86_64/lib/grub/x86_64-efi \
     -O x86_64-efi \
     -o ${output_dir}/grub-efi-bootx64.efi \
     $GRUB_MODULES
