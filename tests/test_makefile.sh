@@ -85,7 +85,7 @@ etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
 etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
-etc/grub.d/00_04_mender_setup_env_grub_functions
+etc/grub.d/00_04_mender_setup_env_functions_grub
 etc/grub.d/00_05_mender_setup_env_grub
 etc/grub.d/00_80_mender_choose_partitions_grub
 etc/grub.d/00_90_mender_boot_selected_rootfs
@@ -127,7 +127,7 @@ etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
 etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
-etc/grub.d/00_04_mender_setup_env_grub_functions
+etc/grub.d/00_04_mender_setup_env_functions_grub
 etc/grub.d/00_05_mender_setup_env_grub
 etc/grub.d/00_80_mender_choose_partitions_grub
 etc/grub.d/00_90_mender_boot_selected_rootfs
@@ -229,7 +229,7 @@ etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
 etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
-etc/grub.d/00_04_mender_setup_env_grub_functions
+etc/grub.d/00_04_mender_setup_env_functions_grub
 etc/grub.d/00_05_mender_setup_env_grub
 etc/grub.d/00_80_mender_choose_partitions_grub
 etc/grub.d/00_90_mender_boot_selected_rootfs
