@@ -40,8 +40,15 @@ fi
 if [ -z "$ENV_DIR" ]; then
     if [ -d /boot/efi/grub-mender-grubenv ]; then
         ENV_DIR=/boot/efi/grub-mender-grubenv
-    else
+    elif [ -d /boot/grub/grub-mender-grubenv ]; then
+        ENV_DIR=/boot/grub/grub-mender-grubenv
+    elif [ -d /boot/efi/EFI/BOOT/mender_grubenv1 ]; then
         ENV_DIR=/boot/efi/EFI/BOOT
+    elif [ -d /boot/grub/mender_grubenv1 ]; then
+        ENV_DIR=/boot/grub
+    else
+        echo "Cannot determine environment directory." 1>&2
+        exit 2
     fi
 fi
 ENV1="$ENV_DIR/mender_grubenv1/env"
