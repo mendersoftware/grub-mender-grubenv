@@ -1,56 +1,12 @@
-variables:
-  S3_BUCKET_NAME: mender
-
-include:
-  - project: 'Northern.tech/Mender/mendertesting'
-    file: '.gitlab-ci-check-commits-signoffs.yml'
-  - project: 'Northern.tech/Mender/mendertesting'
-    file: '.gitlab-ci-check-license.yml'
-  - project: 'Northern.tech/Mender/mendertesting'
-    file: '.gitlab-ci-github-status-updates.yml'
-
 stages:
-  - test
-  - build
-  - publish
-
-build:grub-efi:
-  stage: build
-  image: docker
-  services:
-    - docker:19.03.5-dind
-  before_script:
-    - apk --update --no-cache add libc6-compat
-  script:
-    - ./grub-efi/docker-create-grub-efi-binaries
-  artifacts:
-    expire_in: 2w
-    paths:
-      - grub-efi/output/*
-
-test:
-  stage: test
-  image: debian:10
-  variables:
-    DEBIAN_FRONTEND: noninteractive
-  before_script:
-    - apt update && apt install -yy make
-  script:
-    - cp mender_grubenv_defines.example mender_grubenv_defines
-    - make
-    - make check
+  - debug
 
 publish:s3:
-  stage: publish
+  stage: debug
   image: debian:buster
-  dependencies:
-    - build:grub-efi
-  before_script:
-    - apt update && apt install -yyq awscli git
   script:
-    - ./grub-efi/prepare-output-folder-for-upload
-    - aws s3 cp --recursive --acl public-read output/upload/ s3://$S3_BUCKET_NAME/grub-mender-grubenv/
+    - echo $CI_COMMIT_REF_NAME
   rules:
-    - if: '$CI_COMMIT_REFNAME =~ /^(master|[0-9]+\.[0-9]+\.x)$/'
-    - if: '$CI_COMMIT_REFNAME !~ /^(master|[0-9]+\.[0-9]+\.x)$/ && $AWS_SECRET_ACCESS_KEY'
+    - if: '$CI_COMMIT_REF_NAME =~ /^pr_25$/'
+    - if: '$CI_COMMIT_REF_NAME !~ /^pr_25$/ && $CI_COMMIT_REF_NAME'
       when: manual
