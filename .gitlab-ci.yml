@@ -52,5 +52,5 @@ publish:s3:
     - aws s3 cp --recursive --acl public-read output/upload/ s3://$S3_BUCKET_NAME/grub-mender-grubenv/
   rules:
     - if: '$CI_COMMIT_REFNAME =~ /^(master|[0-9]+\.[0-9]+\.x)$/'
-    - if: '$AWS_SECRET_ACCESS_KEY'
+    - if: '$CI_COMMIT_REFNAME !~ /^(master|[0-9]+\.[0-9]+\.x)$/ && $AWS_SECRET_ACCESS_KEY'
       when: manual
