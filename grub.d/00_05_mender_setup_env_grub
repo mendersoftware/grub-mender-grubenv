@@ -1,14 +1,10 @@
 if [ "$GRUB_MENDER_GRUBENV_CFG_GENERATION" != "true" ]; then
-    # First stage, before loading the rootfs specific grub-mender-grubenv.cfg.
+    # Only load the environment in the first stage, when we are executing from
+    # the boot partition. When executing from the root partition, we don't want
+    # to run this step.
     cat <<'EOF'
 mender_check_and_restore_env
 mender_load_env_with_rollback
-regexp (.*),(.*) $root -s mender_grub_storage_device
-EOF
-else
-    # Second stage, after loading the rootfs specific grub-mender-grubenv.cfg.
-    cat <<'EOF'
-mender_load_env
 regexp (.*),(.*) $root -s mender_grub_storage_device
 EOF
 fi
