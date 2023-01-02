@@ -57,6 +57,7 @@ LOCKSUM1="$ENV_DIR/mender_grubenv1/lock.sha256sum"
 ENV2="$ENV_DIR/mender_grubenv2/env"
 LOCK2="$ENV_DIR/mender_grubenv2/lock"
 LOCKSUM2="$ENV_DIR/mender_grubenv2/lock.sha256sum"
+LOCKFILE="/var/lock/grub-mender-grubenv-set.lock"
 
 GRUB_EDITENV=`which grub-editenv 2>/dev/null`
 if [ -z "${GRUB_EDITENV}" ]; then
@@ -133,6 +134,18 @@ check_and_restore_env() {
     fi
 }
 
+lock_env() {
+    # Get a file descriptor of the lockfile
+    touch "$LOCKFILE"
+    exec {LOCKFILE_FD}< "${LOCKFILE}"
+    # Get the lock with a timeout of 1 second
+    flock -w 1 "$LOCKFILE_FD" || { echo "ERROR: can't acquire flock()." >&2; exit 1; }
+}
+
+unlock_env() {
+    flock -u "$LOCKFILE_FD"
+}
+
 setenv() {
     while [ -n "$1" ]; do
         if [ -n "$SCRIPT" ]; then
@@ -187,6 +200,8 @@ setenv() {
 
     set -e
 
+    lock_env
+
     check_and_restore_env
 
     ${GRUB_EDITENV} $LOCK2 set editing=1
@@ -197,6 +212,7 @@ setenv() {
     sync $LOCK2
     if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
         echo "Environment 2 unexpectedly corrupt after update." 1>&2
+        unlock_env
         exit 2
     fi
 
@@ -208,8 +224,11 @@ setenv() {
     sync $LOCK1
     if ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
         echo "Environment 1 unexpectedly corrupt after update." 1>&2
+        unlock_env
         exit 2
     fi
+
+    unlock_env
 }
 
 printenv() {
@@ -227,9 +246,14 @@ printenv() {
         esac
     done
 
+    lock_env
+
     check_and_restore_env
 
     VARS="`${GRUB_EDITENV} $ENV1 list`"
+
+    unlock_env
+
     eval "`echo "$VARS" | make_evalable`"
 
     if [ $NO_ARGS = 1 ]; then
