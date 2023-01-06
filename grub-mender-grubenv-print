@@ -58,6 +58,7 @@ ENV2="$ENV_DIR/mender_grubenv2/env"
 LOCK2="$ENV_DIR/mender_grubenv2/lock"
 LOCKSUM2="$ENV_DIR/mender_grubenv2/lock.sha256sum"
 LOCKFILE="/var/lock/grub-mender-grubenv-set.lock"
+LOCKFILE_FD=9
 
 GRUB_EDITENV=`which grub-editenv 2>/dev/null`
 if [ -z "${GRUB_EDITENV}" ]; then
@@ -137,7 +138,7 @@ check_and_restore_env() {
 lock_env() {
     # Get a file descriptor of the lockfile
     touch "$LOCKFILE"
-    exec {LOCKFILE_FD}< "${LOCKFILE}"
+    exec ${LOCKFILE_FD}< "${LOCKFILE}"
     # Get the lock with a timeout of 1 second
     flock -w 1 "$LOCKFILE_FD" || { echo "ERROR: can't acquire flock()." >&2; exit 1; }
 }
