@@ -131,7 +131,8 @@ check_and_restore_env() {
         sync $ENV2
         ${GRUB_EDITENV} $LOCK2 create
         ${GRUB_EDITENV} $LOCK2 set editing=0
-        sync $LOCK2
+        sha256sum "$LOCK2" > "$LOCKSUM2"
+        sync "$LOCK2" "$LOCKSUM2"
         if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
             echo "Unable to restore environment 2." 1>&2
             exit 2
@@ -141,7 +142,8 @@ check_and_restore_env() {
         sync $ENV1
         ${GRUB_EDITENV} $LOCK1 create
         ${GRUB_EDITENV} $LOCK1 set editing=0
-        sync $LOCK1
+        sha256sum "$LOCK1" > "$LOCKSUM1"
+        sync "$LOCK1" "$LOCKSUM1"
         if ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
             echo "Unable to restore environment 1." 1>&2
             exit 2
