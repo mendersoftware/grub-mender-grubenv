@@ -138,7 +138,7 @@ check_and_restore_env() {
 lock_env() {
     # Get a file descriptor of the lockfile
     touch "$LOCKFILE"
-    exec ${LOCKFILE_FD}< "${LOCKFILE}"
+    eval "exec ${LOCKFILE_FD}< ${LOCKFILE}"
     # Get the lock with a timeout of 1 second
     flock -w 1 "$LOCKFILE_FD" || { echo "ERROR: can't acquire flock()." >&2; exit 1; }
 }
