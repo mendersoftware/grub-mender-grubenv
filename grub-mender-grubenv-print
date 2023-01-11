@@ -109,29 +109,48 @@ make_evalable() {
     sed -e 's/'\''/'\'\\\\\'\''/g; s/\\\$/\\\$/g; s/=/='\''/; s/$/'\''/'
 }
 
+is_locksum_valid() {
+    local LOCKSUM="$1"
+
+    if ( cd "$(dirname $LOCKSUM)" && sha256sum -c "$LOCKSUM" > /dev/null ); then
+        echo "valid"
+    else
+        echo "invalid"
+    fi
+}
+
 check_and_restore_env() {
     # Check that both environments are valid, and if not, restore one using the
     # other.
-    if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
+    state_of_env1=$(is_locksum_valid "$LOCKSUM1")
+    state_of_env2=$(is_locksum_valid "$LOCKSUM2")
+
+    # Check if env1 is good and env2 bad
+    if [ "$state_of_env1" == "valid" ] && [ "$state_of_env2" == "invalid" ] ; then
         dd if=$ENV1 of=$ENV2 conv=notrunc > /dev/null 2>&1
         sync $ENV2
         ${GRUB_EDITENV} $LOCK2 create
         ${GRUB_EDITENV} $LOCK2 set editing=0
-        sync $LOCK2
+        sha256sum "$LOCK2" > "$LOCKSUM2"
+        sync "$LOCK2" "$LOCKSUM2"
         if ! ( cd `dirname $LOCKSUM2` && sha256sum -c $LOCKSUM2 > /dev/null ); then
             echo "Unable to restore environment 2." 1>&2
             exit 2
         fi
-    elif ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
+    elif [ "$state_of_env1" == "invalid" ] && [ "$state_of_env2" == "valid" ] ; then
         dd if=$ENV2 of=$ENV1 conv=notrunc > /dev/null 2>&1
         sync $ENV1
         ${GRUB_EDITENV} $LOCK1 create
         ${GRUB_EDITENV} $LOCK1 set editing=0
-        sync $LOCK1
+        sha256sum "$LOCK1" > "$LOCKSUM1"
+        sync "$LOCK1" "$LOCKSUM1"
         if ! ( cd `dirname $LOCKSUM1` && sha256sum -c $LOCKSUM1 > /dev/null ); then
             echo "Unable to restore environment 1." 1>&2
             exit 2
         fi
+    elif [ "$state_of_env1" == "invalid" ] && [ "$state_of_env2" == "invalid" ] ; then
+        echo "Unable to restore environment both are corrupt." 1>&2
+        exit 2
     fi
 }
 
