@@ -126,7 +126,7 @@ check_and_restore_env() {
     state_of_env2=$(is_locksum_valid "$LOCKSUM2")
 
     # Check if env1 is good and env2 bad
-    if [ "$state_of_env1" == "valid" ] && [ "$state_of_env2" == "invalid" ] ; then
+    if [ "$state_of_env1" = "valid" ] && [ "$state_of_env2" = "invalid" ] ; then
         dd if=$ENV1 of=$ENV2 conv=notrunc > /dev/null 2>&1
         sync $ENV2
         ${GRUB_EDITENV} $LOCK2 create
@@ -137,7 +137,7 @@ check_and_restore_env() {
             echo "Unable to restore environment 2." 1>&2
             exit 2
         fi
-    elif [ "$state_of_env1" == "invalid" ] && [ "$state_of_env2" == "valid" ] ; then
+    elif [ "$state_of_env1" = "invalid" ] && [ "$state_of_env2" = "valid" ] ; then
         dd if=$ENV2 of=$ENV1 conv=notrunc > /dev/null 2>&1
         sync $ENV1
         ${GRUB_EDITENV} $LOCK1 create
@@ -148,7 +148,7 @@ check_and_restore_env() {
             echo "Unable to restore environment 1." 1>&2
             exit 2
         fi
-    elif [ "$state_of_env1" == "invalid" ] && [ "$state_of_env2" == "invalid" ] ; then
+    elif [ "$state_of_env1" = "invalid" ] && [ "$state_of_env2" = "invalid" ] ; then
         echo "Unable to restore environment both are corrupt." 1>&2
         exit 2
     fi
