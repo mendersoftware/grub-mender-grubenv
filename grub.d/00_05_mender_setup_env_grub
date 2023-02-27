@@ -6,5 +6,6 @@ if [ "$GRUB_MENDER_GRUBENV_CFG_GENERATION" != "true" ]; then
 mender_check_and_restore_env
 mender_load_env_with_rollback
 regexp (.*),(.*) $root -s mender_grub_storage_device
+export mender_grub_storage_device
 EOF
 fi
