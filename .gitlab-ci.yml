@@ -30,7 +30,7 @@ build:grub-efi:
 
 test:
   stage: test
-  image: debian:10
+  image: debian:12
   variables:
     DEBIAN_FRONTEND: noninteractive
   before_script:
@@ -42,7 +42,7 @@ test:
 
 publish:s3:
   stage: publish
-  image: debian:buster
+  image: debian:12
   dependencies:
     - build:grub-efi
   before_script:
