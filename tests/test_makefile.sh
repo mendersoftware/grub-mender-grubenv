@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2022 Northern.tech AS
+# Copyright 2023 Northern.tech AS
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -92,11 +92,13 @@ boot/efi/grub-mender-grubenv/mender_grubenv2/env
 boot/efi/grub-mender-grubenv/mender_grubenv2/lock
 boot/efi/grub-mender-grubenv/mender_grubenv2/lock.sha256sum
 etc/default/grub.d/00_mender_grubenv_defines.cfg
+etc/default/grub.d/03_mender_compute_variables.cfg
 etc/default/grub.d/mender-export-grub_probe.cfg
 etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
 etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
+etc/grub.d/00_03_mender_compute_variables
 etc/grub.d/00_04_mender_setup_env_functions_grub
 etc/grub.d/00_05_mender_setup_env_grub
 etc/grub.d/00_80_mender_choose_partitions_grub
@@ -134,11 +136,13 @@ make -s DESTDIR="$TMPDIR/install" DEFINES_FILE="$SRCDIR"/mender_grubenv_defines.
 find "$TMPDIR/install" -type f -o -type l | sed -e "s,^$TMPDIR/install/,," | sort > "$TMPDIR/actual.log"
 cat > "$TMPDIR/expected.log" <<EOF
 etc/default/grub.d/00_mender_grubenv_defines.cfg
+etc/default/grub.d/03_mender_compute_variables.cfg
 etc/default/grub.d/mender-export-grub_probe.cfg
 etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
 etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
+etc/grub.d/00_03_mender_compute_variables
 etc/grub.d/00_04_mender_setup_env_functions_grub
 etc/grub.d/00_05_mender_setup_env_grub
 etc/grub.d/00_80_mender_choose_partitions_grub
@@ -236,11 +240,13 @@ boot/efi/grub-mender-grubenv/mender_grubenv2/env
 boot/efi/grub-mender-grubenv/mender_grubenv2/lock
 boot/efi/grub-mender-grubenv/mender_grubenv2/lock.sha256sum
 etc/default/grub.d/00_mender_grubenv_defines.cfg
+etc/default/grub.d/03_mender_compute_variables.cfg
 etc/default/grub.d/mender-export-grub_probe.cfg
 etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
 etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
+etc/grub.d/00_03_mender_compute_variables
 etc/grub.d/00_04_mender_setup_env_functions_grub
 etc/grub.d/00_05_mender_setup_env_grub
 etc/grub.d/00_80_mender_choose_partitions_grub
