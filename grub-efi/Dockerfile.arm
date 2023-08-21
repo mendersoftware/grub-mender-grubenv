@@ -1,7 +1,7 @@
-FROM debian:stretch
+FROM debian:12
 
 RUN apt-get update -q && \
-    apt-get install -qy crossbuild-essential-armhf python wget bison flex
+    apt-get install -qy crossbuild-essential-armhf python3 wget bison flex
 
 ARG GRUB_VERSION=none
 RUN if [ "$GRUB_VERSION" = none ]; then echo "GRUB_VERSION must be set!" 1>&2; exit 1; fi
@@ -11,7 +11,12 @@ RUN wget --progress=dot:mega ftp://ftp.gnu.org/gnu/grub/grub-${GRUB_VERSION}.tar
 
 WORKDIR grub-${GRUB_VERSION}
 
+# -Wno-array-bounds: GCC 12 generates warnings-as-errors which, according to
+# commit acffb81485e35e1f in GRUB, are false positives. They are in the process
+# of fixing it in GRUB 2.12, but it isn't released yet at the time of writing
+# this, so just disable this warning altogether.
 RUN ./configure \
+    CFLAGS=-Wno-array-bounds \
     --prefix=/install \
     --with-platform=efi \
     --host arm-linux-gnueabihf
