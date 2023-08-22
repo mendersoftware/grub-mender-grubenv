@@ -1,4 +1,4 @@
-FROM debian:12
+FROM debian:10
 
 RUN apt-get update -q && \
     apt-get install -qy build-essential python3 wget bison flex
@@ -11,12 +11,7 @@ RUN wget --progress=dot:mega ftp://ftp.gnu.org/gnu/grub/grub-${GRUB_VERSION}.tar
 
 WORKDIR grub-${GRUB_VERSION}
 
-# -Wno-array-bounds: GCC 12 generates warnings-as-errors which, according to
-# commit acffb81485e35e1f in GRUB, are false positives. They are in the process
-# of fixing it in GRUB 2.12, but it isn't released yet at the time of writing
-# this, so just disable this warning altogether.
 RUN ./configure \
-    CFLAGS=-Wno-array-bounds \
     --prefix=/install \
     --with-platform=efi
 RUN make -j $(nproc)
