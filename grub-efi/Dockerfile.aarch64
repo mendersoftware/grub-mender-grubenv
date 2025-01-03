@@ -1,7 +1,7 @@
-FROM debian:10
+FROM debian:11
 
 RUN apt-get update -q && \
-    apt-get install -qy crossbuild-essential-arm64 python3 wget bison flex
+    apt-get install -qy crossbuild-essential-arm64 python3 wget bison flex autoconf gawk
 
 ARG GRUB_VERSION=none
 RUN if [ "$GRUB_VERSION" = none ]; then echo "GRUB_VERSION must be set!" 1>&2; exit 1; fi
@@ -10,6 +10,10 @@ RUN wget --progress=dot:mega ftp://ftp.gnu.org/gnu/grub/grub-${GRUB_VERSION}.tar
     tar -xzf grub-${GRUB_VERSION}.tar.gz
 
 WORKDIR grub-${GRUB_VERSION}
+
+# For 2.12 a patch is needed, see:
+# https://git.savannah.gnu.org/cgit/grub.git/commit/?id=b835601c7639ed1890f2d3db91900a8506011a8e
+RUN if [ "$GRUB_VERSION" = 2.12 ]; then echo "depends bli part_gpt" > grub-core/extra_deps.lst && GRUB_AUTORECONF=1; fi
 
 RUN ./configure \
     --prefix=/install \
