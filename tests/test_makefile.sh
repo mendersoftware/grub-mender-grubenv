@@ -96,7 +96,6 @@ etc/default/grub.d/03_mender_compute_variables.cfg
 etc/default/grub.d/mender-export-grub_probe.cfg
 etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
-etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
 etc/grub.d/00_03_mender_compute_variables
 etc/grub.d/00_04_mender_setup_env_functions_grub
@@ -140,7 +139,6 @@ etc/default/grub.d/03_mender_compute_variables.cfg
 etc/default/grub.d/mender-export-grub_probe.cfg
 etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
-etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
 etc/grub.d/00_03_mender_compute_variables
 etc/grub.d/00_04_mender_setup_env_functions_grub
@@ -244,7 +242,6 @@ etc/default/grub.d/03_mender_compute_variables.cfg
 etc/default/grub.d/mender-export-grub_probe.cfg
 etc/default/grub.d/mender-os-probe-skip.cfg
 etc/default/grub.d/mender-root-device.cfg
-etc/default/grub.d/xx_mender_font_and_theme_handling.cfg
 etc/grub.d/00_00_mender_grubenv_defines
 etc/grub.d/00_03_mender_compute_variables
 etc/grub.d/00_04_mender_setup_env_functions_grub
