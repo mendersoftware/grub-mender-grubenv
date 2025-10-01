@@ -1,4 +1,4 @@
-FROM debian:11
+FROM debian:13
 
 RUN apt-get update -q && \
     apt-get install -qy crossbuild-essential-arm64 python3 wget bison flex autoconf gawk
