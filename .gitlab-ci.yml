@@ -24,9 +24,6 @@ include:
     file: '.gitlab-ci-check-license.yml'
   - project: 'Northern.tech/Mender/mendertesting'
     file: '.gitlab-ci-github-status-updates.yml'
-  - component: gitlab.com/Northern.tech/Mender/mendertesting/renovate@master
-    inputs:
-      stage: "renovate"
 
 default:
   tags: !reference [.qa-common-default-runner, tags]
