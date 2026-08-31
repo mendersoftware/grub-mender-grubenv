@@ -51,7 +51,7 @@ build:grub-efi:
 
 test:
   stage: test
-  image: debian:12
+  image: debian:13
   variables:
     DEBIAN_FRONTEND: noninteractive
   before_script:
@@ -76,7 +76,7 @@ test:
 
 publish:s3:
   stage: publish
-  image: debian:12
+  image: debian:13
   dependencies:
     - build:grub-efi
   id_tokens:
