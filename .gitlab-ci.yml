@@ -39,7 +39,7 @@ build:grub-efi:
   stage: build
   image: docker
   services:
-    - docker:29.1.4-dind
+    - docker:29.7.2-dind
   before_script:
     - apk --update --no-cache add libc6-compat
   script:
