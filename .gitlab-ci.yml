@@ -30,7 +30,6 @@ default:
   retry: !reference [.qa-common-default-retry, retry]
 
 stages:
-  - renovate
   - test
   - build
   - publish
